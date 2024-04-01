@@ -1,21 +1,38 @@
-# @0x5e/homebridge-tuya-platform
+# homebridge-tuya-temp-from-file
 
-[![npm](https://badgen.net/npm/v/@0x5e/homebridge-tuya-platform)](https://npmjs.com/package/@0x5e/homebridge-tuya-platform)
-[![npm](https://badgen.net/npm/dt/@0x5e/homebridge-tuya-platform)](https://npmjs.com/package/@0x5e/homebridge-tuya-platform)
-[![mit-license](https://badgen.net/npm/license/@0x5e/homebridge-tuya-platform)](https://github.com/0x5e/homebridge-tuya-platform/blob/main/LICENSE)
-[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
-[![Build and Lint](https://github.com/0x5e/homebridge-tuya-platform/actions/workflows/build.yml/badge.svg)](https://github.com/0x5e/homebridge-tuya-platform/actions/workflows/build.yml)
-[![join-discord](https://badgen.net/badge/icon/discord?icon=discord&label=homebridge/tuya)](https://discord.gg/homebridge-432663330281226270)
+# Attention!
+This is fork version of [@0x5e/homebridge-tuya-platform](https://github.com/0x5e/homebridge-tuya-platform) witch is fork  of official Tuya Homebridge plugin.
 
+The primary purpose of this fork is to revamp the workflow for handling current metrics when working with air conditioners through an IR blaster. The issue at hand is that the indicator for the current temperature/humidity is either set to 0 or the temperature to which the air conditioner is set to cool. As a result, HomeKit may display the room temperature inaccurately.
 
-Fork version of the official Tuya Homebridge plugin, with a focus on fixing bugs and adding new device support.
+In this plugin, we obtain temperature and humidity readings from a file. (This functionality is also provided by plugins for Broadlink IR blasters.)
 
+To the plugin config, add the following:
 
+```yaml
+  "name": "Tuya",
+  "options": {
+    .....
+    "filePaths": [
+      {
+        "deviceId": "your_tuya_ac_device_id",
+        "temperaturePath": "/path/to/temperature/file.txt",
+        "humidityPath": "/path/to/humidity/file.txt",
+      }
+    ]
+  }
+```
 
-⚠️**Update on 2024.1.14:** Thanks for the attention on this project. There's more and more "problem device", which has wrong definition by manufacture (reversed 0%-100% state, wrong range, wrong unit, ...). Support them one by one really cost a lot. I'm not going to support them in the future, please try solve them by yourself. PRs are still welcome, and bugs will be focused. Thanks again :)
+Multiple air conditioners can be specified aslo.
 
+For the plugin to work correctly, the file should contain only the number to be passed to the plugin, using a period as the separator.
+Example:
+```
+23.5
+```
 
-
+To conveniently record the metrics into files (in cases where the sensors do not have built-in functionality for this), I recommend using the plugin
+ [homebridge-httptofile-plugin](https://www.npmjs.com/package/homebridge-httptofile-plugin).
 
 ## Features
 

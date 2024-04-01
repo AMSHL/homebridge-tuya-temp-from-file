@@ -29,6 +29,7 @@ export interface TuyaPlatformCustomConfigOptions {
   deviceOverrides?: Array<TuyaPlatformDeviceConfig>;
   debug?: boolean;
   debugLevel?: string;
+  filePaths?: Array<TemperatureFromPathOptions>;
 }
 
 export interface TuyaPlatformHomeConfigOptions {
@@ -44,6 +45,7 @@ export interface TuyaPlatformHomeConfigOptions {
   deviceOverrides?: Array<TuyaPlatformDeviceConfig>;
   debug?: boolean;
   debugLevel?: string;
+  filePaths?: Array<TemperatureFromPathOptions>;
 }
 
 export type TuyaPlatformConfigOptions = TuyaPlatformCustomConfigOptions | TuyaPlatformHomeConfigOptions;
@@ -60,7 +62,14 @@ export const customOptionsSchema = {
     deviceOverrides: { 'type': 'array' },
     debug: { type: 'boolean' },
     debugLevel: { 'type': 'string' },
+    filePaths: {'type': 'array' },
   },
+};
+
+export type TemperatureFromPathOptions = {
+  deviceId: string;
+  humidityPath?: string;
+  temperaturePath?: string;
 };
 
 export const homeOptionsSchema = {
@@ -74,6 +83,7 @@ export const homeOptionsSchema = {
     appSchema: { 'type': 'string', required: true },
     homeWhitelist: { 'type': 'array' },
     deviceOverrides: { 'type': 'array' },
+    filePaths: { 'type': 'array' },
     debug: { type: 'boolean' },
     debugLevel: { 'type': 'string' },
   },

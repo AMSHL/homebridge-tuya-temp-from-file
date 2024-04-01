@@ -1,3 +1,6 @@
+import { TemperatureFromPathOptions } from '../config';
+import fs from 'fs';
+
 import debounce from 'debounce';
 import BaseAccessory from './BaseAccessory';
 
@@ -17,6 +20,8 @@ const FAN_SPEED_HIGH = 3;
 
 export default class IRAirConditionerAccessory extends BaseAccessory {
 
+  debounceSendACCommands = debounce(this.sendACCommands, 100);
+
   configureServices() {
     this.configureAirConditioner();
     this.configureDehumidifier();
@@ -27,7 +32,6 @@ export default class IRAirConditionerAccessory extends BaseAccessory {
 
     const service = this.mainService();
     const { INACTIVE, ACTIVE } = this.Characteristic.Active;
-
     // Required Characteristics
     service.getCharacteristic(this.Characteristic.Active)
       .onGet(() => {
@@ -35,7 +39,7 @@ export default class IRAirConditionerAccessory extends BaseAccessory {
       })
       .onSet(async value => {
         if (value === ACTIVE) {
-          // Turn off Dehumidifier & Fan
+        // Turn off Dehumidifier & Fan
           this.supportDehumidifier() && this.dehumidifierService().getCharacteristic(this.Characteristic.Active).updateValue(INACTIVE);
           this.supportFan() && this.fanService().getCharacteristic(this.Characteristic.Active).updateValue(INACTIVE);
           this.fanService().getCharacteristic(this.Characteristic.Active).value = INACTIVE;
@@ -98,7 +102,7 @@ export default class IRAirConditionerAccessory extends BaseAccessory {
       })
       .onSet(async value => {
         if (value === ACTIVE) {
-          // Turn off AC & Fan
+        // Turn off AC & Fan
           this.mainService().getCharacteristic(this.Characteristic.Active).updateValue(INACTIVE);
           this.supportFan() && this.fanService().getCharacteristic(this.Characteristic.Active).updateValue(INACTIVE);
         }
@@ -117,11 +121,11 @@ export default class IRAirConditionerAccessory extends BaseAccessory {
 
     service.getCharacteristic(this.Characteristic.CurrentRelativeHumidity)
       .onGet(() => {
-        const handler = this.getParentAccessory().accessory
-          .getService(this.Service.HumiditySensor)
-          ?.getCharacteristic(this.Characteristic.CurrentRelativeHumidity)['getHandler'];
-        const humidity = handler ? handler() : 0;
-        return humidity;
+        const humidityFileValue = this.platform.options.filePaths?.length
+          ? this.platform.options.filePaths?.find((element: TemperatureFromPathOptions) => {
+            return element.deviceId === this.device.id;
+          })?.humidityPath : undefined;
+        return humidityFileValue ? fs.readFileSync(humidityFileValue, 'utf8') : '0';
       });
 
     // Optional Characteristics
@@ -143,7 +147,7 @@ export default class IRAirConditionerAccessory extends BaseAccessory {
       })
       .onSet(async value => {
         if (value === ACTIVE) {
-          // Turn off AC & Dehumidifier
+        // Turn off AC & Dehumidifier
           this.mainService().getCharacteristic(this.Characteristic.Active).updateValue(INACTIVE);
           this.supportDehumidifier() && this.dehumidifierService().getCharacteristic(this.Characteristic.Active).updateValue(INACTIVE);
         }
@@ -281,11 +285,13 @@ export default class IRAirConditionerAccessory extends BaseAccessory {
   configureCurrentTemperature() {
     this.mainService().getCharacteristic(this.Characteristic.CurrentTemperature)
       .onGet(() => {
-        const handler = this.getParentAccessory().accessory
-          .getService(this.Service.TemperatureSensor)
-          ?.getCharacteristic(this.Characteristic.CurrentTemperature)['getHandler'];
-        const temp = handler ? handler() : this.getTemp();
-        return temp;
+        this.log.warn('Searching temperature for device - ', this.device.id);
+        const temperatureFileValue = this.platform.options.filePaths?.length
+          ? this.platform.options.filePaths?.find((element: TemperatureFromPathOptions) => {
+            return element.deviceId === this.device.id;
+          })?.temperaturePath : undefined;
+        this.log.warn('File path', temperatureFileValue);
+        return temperatureFileValue ? fs.readFileSync(temperatureFileValue, 'utf8') : '0';
       });
   }
 
@@ -302,17 +308,15 @@ export default class IRAirConditionerAccessory extends BaseAccessory {
     service.getCharacteristic(this.Characteristic.RotationSpeed)
       .onGet(() => (this.getWind() === FAN_SPEED_AUTO) ? FAN_SPEED_HIGH : this.getWind())
       .onSet(async value => {
-        // if (this.getWind() === FAN_SPEED_AUTO) {
-        //   return;
-        // }
+      // if (this.getWind() === FAN_SPEED_AUTO) {
+      //   return;
+      // }
         if (value !== 0) {
           this.setWind(value);
         }
       })
       .setProps({ minValue: 0, maxValue: 3, minStep: 1, unit: 'speed' });
   }
-
-  debounceSendACCommands = debounce(this.sendACCommands, 100);
 
   async sendACCommands() {
     const { parent_id, id } = this.device;
